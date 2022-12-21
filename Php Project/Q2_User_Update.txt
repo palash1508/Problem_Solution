@@ -1,0 +1,43 @@
+<?php
+
+use Slim\Http\Request;
+use Slim\Http\Response;
+
+// Validate the request data
+function validateProfileData($data) {
+  // First name, last name, and role are required fields
+  if (!isset($data['first_name']) || !isset($data['last_name']) || !isset($data['role'])) {
+    return false;
+  }
+  return true;
+}
+
+// Update the user's profile in the database
+function updateProfile($db, $userId, $data) {
+  $query = "UPDATE users SET first_name = :first_name, last_name = :last_name, role = :role WHERE id = :id";
+  $stmt = $db->prepare($query);
+  $stmt->bindParam(':first_name', $data['first_name']);
+  $stmt->bindParam(':last_name', $data['last_name']);
+  $stmt->bindParam(':role', $data['role']);
+  $stmt->bindParam(':id', $userId);
+  return $stmt->execute();
+}
+
+$app->put('/profile', function (Request $request, Response $response, array $args) {
+  // Get the request data
+  $data = $request->getParsedBody();
+
+  // Validate the request data
+  if (!validateProfileData($data)) {
+    return $response->withStatus(400);
+  }
+
+  // Update the user's profile in the database
+  if (updateProfile($this->db, $request->getAttribute('user_id'), $data)) {
+    return $response->withJson(['message' => 'Success']);
+  } else {
+    return $response->withStatus(500);
+  }
+});
+
+//This code defines a route that handles PUT requests to the `/profile` endpoint. It first validates the request data to make sure that the required fields (first name, last name, and role) are present. If the data is valid, it updates the user's profile in the database using the `updateProfile` function. If the update is successful, it returns a success message to the client. If the data is invalid or the update fails, it returns an error status code.
